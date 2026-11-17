@@ -52,11 +52,11 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false
       },
       data_compra: {
-        type: DataTypes.DATE,
+        type: DataTypes.DATEONLY,
         allowNull: false
       },
       proxima_recompra: {
-        type: DataTypes.DATE,
+        type: DataTypes.DATEONLY,
         allowNull: false
       },
       status: {
@@ -78,7 +78,25 @@ module.exports = (sequelize, DataTypes) => {
     {
       tableName: 'itens_pedido',
       timestamps: true,
-      underscored: false
+      underscored: false,
+      indexes: [
+        {
+          name: 'idx_itens_pedido_pedido_id',
+          fields: ['pedido_id']
+        },
+        {
+          name: 'idx_itens_pedido_codigo_api',
+          fields: ['codigo_api']
+        },
+        {
+          name: 'idx_itens_pedido_proxima_recompra',
+          fields: ['proxima_recompra']
+        },
+        {
+          name: 'idx_itens_pedido_status',
+          fields: ['status']
+        }
+      ]
     }
   );
 

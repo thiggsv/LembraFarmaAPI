@@ -27,7 +27,7 @@ module.exports = (sequelize, DataTypes) => {
         }
       },
       data_prevista: {
-        type: DataTypes.DATE,
+        type: DataTypes.DATEONLY,
         allowNull: false
       },
       data_envio: {
@@ -64,6 +64,22 @@ module.exports = (sequelize, DataTypes) => {
       timestamps: true,
       underscored: false,
       indexes: [
+        {
+          name: 'idx_alertas_cliente_id',
+          fields: ['cliente_id']
+        },
+        {
+          name: 'idx_alertas_item_pedido_id',
+          fields: ['item_pedido_id']
+        },
+        {
+          name: 'idx_alertas_data_prevista',
+          fields: ['data_prevista']
+        },
+        {
+          name: 'idx_alertas_status',
+          fields: ['status']
+        },
         {
           name: 'uq_alertas_evento',
           unique: true,

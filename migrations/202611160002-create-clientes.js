@@ -25,11 +25,10 @@ module.exports = {
       },
       cpf: {
         type: Sequelize.STRING(14),
-        allowNull: true,
-        unique: true
+        allowNull: true
       },
       data_nascimento: {
-        type: Sequelize.DATE,
+        type: Sequelize.DATEONLY,
         allowNull: true
       },
       telefone: {
@@ -76,13 +75,25 @@ module.exports = {
       updatedAt: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+        defaultValue: Sequelize.literal(
+          'CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'
+        )
       }
     });
 
-    await queryInterface.addIndex('clientes', ['usuario_id']);
-    await queryInterface.addIndex('clientes', ['nome']);
-    await queryInterface.addIndex('clientes', ['cidade']);
+    await queryInterface.addIndex('clientes', ['cpf'], {
+      unique: true,
+      name: 'uq_clientes_cpf'
+    });
+    await queryInterface.addIndex('clientes', ['usuario_id'], {
+      name: 'idx_clientes_usuario_id'
+    });
+    await queryInterface.addIndex('clientes', ['nome'], {
+      name: 'idx_clientes_nome'
+    });
+    await queryInterface.addIndex('clientes', ['cidade'], {
+      name: 'idx_clientes_cidade'
+    });
   },
 
   down: async (queryInterface) => {

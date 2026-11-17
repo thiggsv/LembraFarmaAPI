@@ -53,11 +53,11 @@ module.exports = {
         allowNull: false
       },
       data_compra: {
-        type: Sequelize.DATE,
+        type: Sequelize.DATEONLY,
         allowNull: false
       },
       proxima_recompra: {
-        type: Sequelize.DATE,
+        type: Sequelize.DATEONLY,
         allowNull: false
       },
       status: {
@@ -73,14 +73,24 @@ module.exports = {
       updatedAt: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+        defaultValue: Sequelize.literal(
+          'CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'
+        )
       }
     });
 
-    await queryInterface.addIndex('itens_pedido', ['pedido_id']);
-    await queryInterface.addIndex('itens_pedido', ['codigo_api']);
-    await queryInterface.addIndex('itens_pedido', ['proxima_recompra']);
-    await queryInterface.addIndex('itens_pedido', ['status']);
+    await queryInterface.addIndex('itens_pedido', ['pedido_id'], {
+      name: 'idx_itens_pedido_pedido_id'
+    });
+    await queryInterface.addIndex('itens_pedido', ['codigo_api'], {
+      name: 'idx_itens_pedido_codigo_api'
+    });
+    await queryInterface.addIndex('itens_pedido', ['proxima_recompra'], {
+      name: 'idx_itens_pedido_proxima_recompra'
+    });
+    await queryInterface.addIndex('itens_pedido', ['status'], {
+      name: 'idx_itens_pedido_status'
+    });
   },
 
   down: async (queryInterface) => {

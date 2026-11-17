@@ -30,7 +30,7 @@ module.exports = {
         onDelete: 'CASCADE'
       },
       data_prevista: {
-        type: Sequelize.DATE,
+        type: Sequelize.DATEONLY,
         allowNull: false
       },
       data_envio: {
@@ -59,15 +59,32 @@ module.exports = {
       updatedAt: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+        defaultValue: Sequelize.literal(
+          'CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'
+        )
       }
     });
 
-    await queryInterface.addIndex('alertas', ['cliente_id']);
-    await queryInterface.addIndex('alertas', ['item_pedido_id']);
-    await queryInterface.addIndex('alertas', ['data_prevista']);
-    await queryInterface.addIndex('alertas', ['status']);
-    await queryInterface.addIndex('alertas', ['tipo_alerta']);
+    await queryInterface.addIndex('alertas', ['cliente_id'], {
+      name: 'idx_alertas_cliente_id'
+    });
+    await queryInterface.addIndex('alertas', ['item_pedido_id'], {
+      name: 'idx_alertas_item_pedido_id'
+    });
+    await queryInterface.addIndex('alertas', ['data_prevista'], {
+      name: 'idx_alertas_data_prevista'
+    });
+    await queryInterface.addIndex('alertas', ['status'], {
+      name: 'idx_alertas_status'
+    });
+    await queryInterface.addIndex(
+      'alertas',
+      ['item_pedido_id', 'data_prevista', 'tipo_alerta'],
+      {
+        unique: true,
+        name: 'uq_alertas_evento'
+      }
+    );
   },
 
   down: async (queryInterface) => {

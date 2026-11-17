@@ -51,13 +51,21 @@ module.exports = {
       updatedAt: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+        defaultValue: Sequelize.literal(
+          'CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'
+        )
       }
     });
 
-    await queryInterface.addIndex('pedidos', ['cliente_id']);
-    await queryInterface.addIndex('pedidos', ['usuario_id']);
-    await queryInterface.addIndex('pedidos', ['status']);
+    await queryInterface.addIndex('pedidos', ['cliente_id'], {
+      name: 'idx_pedidos_cliente_id'
+    });
+    await queryInterface.addIndex('pedidos', ['usuario_id'], {
+      name: 'idx_pedidos_usuario_id'
+    });
+    await queryInterface.addIndex('pedidos', ['status'], {
+      name: 'idx_pedidos_status'
+    });
   },
 
   down: async (queryInterface) => {

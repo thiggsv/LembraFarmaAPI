@@ -24,11 +24,10 @@ module.exports = (sequelize, DataTypes) => {
       },
       cpf: {
         type: DataTypes.STRING(14),
-        allowNull: true,
-        unique: true
+        allowNull: true
       },
       data_nascimento: {
-        type: DataTypes.DATE,
+        type: DataTypes.DATEONLY,
         allowNull: true
       },
       telefone: {
@@ -84,7 +83,26 @@ module.exports = (sequelize, DataTypes) => {
     {
       tableName: 'clientes',
       timestamps: true,
-      underscored: false
+      underscored: false,
+      indexes: [
+        {
+          name: 'uq_clientes_cpf',
+          unique: true,
+          fields: ['cpf']
+        },
+        {
+          name: 'idx_clientes_usuario_id',
+          fields: ['usuario_id']
+        },
+        {
+          name: 'idx_clientes_nome',
+          fields: ['nome']
+        },
+        {
+          name: 'idx_clientes_cidade',
+          fields: ['cidade']
+        }
+      ]
     }
   );
 

@@ -17,7 +17,6 @@ module.exports = (sequelize, DataTypes) => {
       email: {
         type: DataTypes.STRING(180),
         allowNull: false,
-        unique: true,
         validate: {
           isEmail: true
         }
@@ -49,7 +48,14 @@ module.exports = (sequelize, DataTypes) => {
     {
       tableName: 'usuarios',
       timestamps: true,
-      underscored: false
+      underscored: false,
+      indexes: [
+        {
+          name: 'uq_usuarios_email',
+          unique: true,
+          fields: ['email']
+        }
+      ]
     }
   );
 

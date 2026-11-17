@@ -15,8 +15,7 @@ module.exports = {
       },
       email: {
         type: Sequelize.STRING(180),
-        allowNull: false,
-        unique: true
+        allowNull: false
       },
       senha: {
         type: Sequelize.STRING(255),
@@ -39,8 +38,15 @@ module.exports = {
       updatedAt: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+        defaultValue: Sequelize.literal(
+          'CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'
+        )
       }
+    });
+
+    await queryInterface.addIndex('usuarios', ['email'], {
+      unique: true,
+      name: 'uq_usuarios_email'
     });
   },
 
