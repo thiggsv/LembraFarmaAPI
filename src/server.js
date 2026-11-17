@@ -1,11 +1,22 @@
 const express = require('express');
 const cors = require('cors');
 const db = require('./models');
+const usuarioRoutes = require('./routes/usuarioRoutes');
+const clienteRoutes = require('./routes/clienteRoutes');
+const autenticar = require('./middlewares/autenticacao');
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use('/usuarios', usuarioRoutes);
+app.use('/clientes', clienteRoutes);
+app.get('/perfil', autenticar, (req, res) => {
+  res.json({
+    mensagem: 'Acesso autorizado!',
+    usuario: req.usuario
+  });
+});
 
 app.get('/health', async (req, res) => {
   try {
