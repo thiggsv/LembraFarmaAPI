@@ -61,17 +61,23 @@ module.exports = (sequelize, DataTypes) => {
   Pedido.associate = (models) => {
     Pedido.belongsTo(models.Cliente, {
       foreignKey: 'cliente_id',
-      as: 'cliente'
+      as: 'cliente',
+      onUpdate: 'CASCADE',
+      onDelete: 'RESTRICT'
     });
 
     Pedido.belongsTo(models.Usuario, {
       foreignKey: 'usuario_id',
-      as: 'usuario'
+      as: 'usuario',
+      onUpdate: 'CASCADE',
+      onDelete: 'SET NULL'
     });
 
     Pedido.hasMany(models.ItemPedido, {
       foreignKey: 'pedido_id',
-      as: 'itens'
+      as: 'itens',
+      onUpdate: 'CASCADE',
+      onDelete: 'CASCADE'
     });
   };
 

@@ -85,12 +85,16 @@ module.exports = (sequelize, DataTypes) => {
   ItemPedido.associate = (models) => {
     ItemPedido.belongsTo(models.Pedido, {
       foreignKey: 'pedido_id',
-      as: 'pedido'
+      as: 'pedido',
+      onUpdate: 'CASCADE',
+      onDelete: 'CASCADE'
     });
 
     ItemPedido.hasMany(models.Alerta, {
       foreignKey: 'item_pedido_id',
-      as: 'alertas'
+      as: 'alertas',
+      onUpdate: 'CASCADE',
+      onDelete: 'CASCADE'
     });
   };
 

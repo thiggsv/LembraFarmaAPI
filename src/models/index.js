@@ -10,6 +10,19 @@ const env = process.env.NODE_ENV || 'development';
 const config = require('../../config/config.js')[env];
 const db = {};
 
+if (env !== 'test') {
+  const requiredVariables = ['DB_USER', 'DB_PASSWORD', 'DB_NAME'];
+  const missingVariables = requiredVariables.filter((name) => (
+    typeof process.env[name] !== 'string' || !process.env[name].trim()
+  ));
+
+  if (missingVariables.length > 0) {
+    throw new Error(
+      `Missing required database environment variables: ${missingVariables.join(', ')}`
+    );
+  }
+}
+
 let sequelize;
 if (config.use_env_variable) {
   sequelize = new Sequelize(process.env[config.use_env_variable], config);

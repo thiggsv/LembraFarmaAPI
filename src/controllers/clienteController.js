@@ -1,5 +1,5 @@
 const { Cliente } = require('../models');
-const { ValidationError, UniqueConstraintError, ForeignKeyConstraintError } = require('sequelize');
+const { errorResponse, isId, isObject, pickFields } = require('../utils/api');
 
 const camposCliente = [
   'nome',
@@ -15,15 +15,56 @@ const camposCliente = [
   'cidade',
   'estado'
 ];
+const tamanhosCliente = {
+  nome: 150,
+  cpf: 14,
+  telefone: 20,
+  email: 180,
+  cep: 9,
+  logradouro: 200,
+  numero: 20,
+  complemento: 100,
+  bairro: 100,
+  cidade: 120,
+  estado: 2
+};
 
-function selecionarCampos(dados) {
-  return camposCliente.reduce((campos, campo) => {
-    if (Object.prototype.hasOwnProperty.call(dados, campo)) {
-      campos[campo] = dados[campo];
+function validarCampos(campos) {
+  for (const [campo, tamanho] of Object.entries(tamanhosCliente)) {
+    if (
+      Object.prototype.hasOwnProperty.call(campos, campo) &&
+      campos[campo] !== null &&
+      (typeof campos[campo] !== 'string' || campos[campo].length > tamanho)
+    ) {
+      return `O campo ${campo} deve ser um texto de até ${tamanho} caracteres.`;
     }
+  }
 
-    return campos;
-  }, {});
+  if (
+    Object.prototype.hasOwnProperty.call(campos, 'data_nascimento') &&
+    campos.data_nascimento !== null &&
+    !dataNascimentoValida(campos.data_nascimento)
+  ) {
+    return 'A data_nascimento deve ser uma data válida.';
+  }
+
+  return null;
+}
+
+function dataNascimentoValida(valor) {
+  if (typeof valor !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
+    return false;
+  }
+  const [ano, mes, dia] = valor.split('-').map(Number);
+  if (ano < 1000) {
+    return false;
+  }
+  const data = new Date(Date.UTC(ano, mes - 1, dia));
+  return (
+    data.getUTCFullYear() === ano &&
+    data.getUTCMonth() === mes - 1 &&
+    data.getUTCDate() === dia
+  );
 }
 
 function respostaCliente(cliente) {
@@ -36,38 +77,13 @@ function respostaCliente(cliente) {
   return dados;
 }
 
-function erroBanco(error, res, acao) {
-  if (error instanceof UniqueConstraintError) {
-    return res.status(409).json({
-      mensagem: 'Este CPF já está cadastrado.'
-    });
-  }
-
-  if (error instanceof ValidationError) {
-    return res.status(400).json({
-      mensagem: 'Os dados do cliente são inválidos.'
-    });
-  }
-
-  if (error instanceof ForeignKeyConstraintError && acao === 'excluir') {
-    return res.status(409).json({
-      mensagem: 'Não foi possível excluir o cliente porque existem registros vinculados.'
-    });
-  }
-
-  console.error(`Erro ao ${acao} cliente:`, error);
-  return res.status(500).json({
-    mensagem: `Erro interno ao ${acao} cliente.`
-  });
-}
-
-function idValido(id) {
-  return /^[1-9]\d*$/.test(id);
-}
-
 async function cadastrar(req, res) {
+  if (!isObject(req.body)) {
+    return res.status(400).json({ mensagem: 'Informe os dados do cliente.' });
+  }
+
   try {
-    const campos = selecionarCampos(req.body || {});
+    const campos = pickFields(req.body, camposCliente);
 
     if (typeof campos.nome !== 'string' || !campos.nome.trim()) {
       return res.status(400).json({
@@ -75,6 +91,10 @@ async function cadastrar(req, res) {
       });
     }
     campos.nome = campos.nome.trim();
+    const erroValidacao = validarCampos(campos);
+    if (erroValidacao) {
+      return res.status(400).json({ mensagem: erroValidacao });
+    }
 
     if (campos.cpf) {
       const clienteExistente = await Cliente.findOne({
@@ -98,7 +118,7 @@ async function cadastrar(req, res) {
       cliente: respostaCliente(cliente)
     });
   } catch (error) {
-    return erroBanco(error, res, 'cadastrar');
+    return errorResponse(error, res, 'cadastrar cliente', 'Este CPF já está cadastrado.');
   }
 }
 
@@ -114,12 +134,12 @@ async function listar(req, res) {
       clientes: clientes.map(respostaCliente)
     });
   } catch (error) {
-    return erroBanco(error, res, 'listar');
+    return errorResponse(error, res, 'listar clientes');
   }
 }
 
 async function consultarPorId(req, res) {
-  if (!idValido(req.params.id)) {
+  if (!isId(req.params.id)) {
     return res.status(400).json({
       mensagem: 'ID do cliente inválido.'
     });
@@ -144,19 +164,23 @@ async function consultarPorId(req, res) {
       cliente: respostaCliente(cliente)
     });
   } catch (error) {
-    return erroBanco(error, res, 'consultar');
+    return errorResponse(error, res, 'consultar cliente');
   }
 }
 
 async function atualizar(req, res) {
-  if (!idValido(req.params.id)) {
+  if (!isId(req.params.id)) {
     return res.status(400).json({
       mensagem: 'ID do cliente inválido.'
     });
   }
 
   try {
-    const campos = selecionarCampos(req.body || {});
+    if (!isObject(req.body)) {
+      return res.status(400).json({ mensagem: 'Informe os campos do cliente.' });
+    }
+
+    const campos = pickFields(req.body, camposCliente);
 
     if (Object.keys(campos).length === 0) {
       return res.status(400).json({
@@ -171,6 +195,10 @@ async function atualizar(req, res) {
         });
       }
       campos.nome = campos.nome.trim();
+    }
+    const erroValidacao = validarCampos(campos);
+    if (erroValidacao) {
+      return res.status(400).json({ mensagem: erroValidacao });
     }
 
     const cliente = await Cliente.findOne({
@@ -205,12 +233,12 @@ async function atualizar(req, res) {
       cliente: respostaCliente(cliente)
     });
   } catch (error) {
-    return erroBanco(error, res, 'atualizar');
+    return errorResponse(error, res, 'atualizar cliente', 'Este CPF já está cadastrado.');
   }
 }
 
 async function excluir(req, res) {
-  if (!idValido(req.params.id)) {
+  if (!isId(req.params.id)) {
     return res.status(400).json({
       mensagem: 'ID do cliente inválido.'
     });
@@ -233,7 +261,7 @@ async function excluir(req, res) {
     await cliente.destroy();
     return res.status(204).end();
   } catch (error) {
-    return erroBanco(error, res, 'excluir');
+    return errorResponse(error, res, 'excluir cliente');
   }
 }
 

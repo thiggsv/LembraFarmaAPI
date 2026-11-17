@@ -1,19 +1,43 @@
 
 const { Usuario } = require('../models');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { errorResponse, isObject } = require('../utils/api');
 
 async function cadastrar(req, res) {
+  if (!isObject(req.body)) {
+    return res.status(400).json({
+      mensagem: 'Informe os dados do usuário.'
+    });
+  }
+
   try {
     const { nome, email, senha, telefone } = req.body;
 
-    if (!nome || !email || !senha) {
+    if (
+      typeof nome !== 'string' ||
+      !nome.trim() ||
+      nome.trim().length > 150 ||
+      typeof email !== 'string' ||
+      !email.trim() ||
+      email.trim().length > 180 ||
+      typeof senha !== 'string' ||
+      !senha ||
+      (
+        telefone !== undefined &&
+        telefone !== null &&
+        (typeof telefone !== 'string' || telefone.length > 20)
+      )
+    ) {
       return res.status(400).json({
         mensagem: 'Nome, e-mail e senha são obrigatórios.'
       });
     }
+    const nomeNormalizado = nome.trim();
+    const emailNormalizado = email.trim();
 
     const usuarioExistente = await Usuario.findOne({
-      where: { email }
+      where: { email: emailNormalizado }
     });
 
     if (usuarioExistente) {
@@ -25,8 +49,8 @@ async function cadastrar(req, res) {
     const senhaHash = await bcrypt.hash(senha, 10);
 
     const usuario = await Usuario.create({
-      nome,
-      email,
+      nome: nomeNormalizado,
+      email: emailNormalizado,
       senha: senhaHash,
       telefone
     });
@@ -43,26 +67,28 @@ async function cadastrar(req, res) {
     });
 
   } catch (error) {
-    console.error('Erro ao cadastrar usuário:', error);
-
-    return res.status(500).json({
-      mensagem: 'Erro interno ao cadastrar usuário.'
-    });
+    return errorResponse(error, res, 'cadastrar usuário', 'Este e-mail já está cadastrado.');
   }
 }
 
 async function login(req, res) {
+  if (!isObject(req.body)) {
+    return res.status(400).json({
+      mensagem: 'Informe e-mail e senha.'
+    });
+  }
+
   try {
     const { email, senha } = req.body;
 
-    if (!email || !senha) {
+    if (typeof email !== 'string' || !email.trim() || typeof senha !== 'string' || !senha) {
       return res.status(400).json({
         mensagem: 'E-mail e senha são obrigatórios.'
       });
     }
 
     const usuario = await Usuario.findOne({
-      where: { email }
+      where: { email: email.trim() }
     });
 
     if (!usuario) {
@@ -88,7 +114,7 @@ async function login(req, res) {
       });
     }
 
-    const token = require('jsonwebtoken').sign(
+    const token = jwt.sign(
       {
         id: usuario.id,
         email: usuario.email
@@ -108,11 +134,7 @@ async function login(req, res) {
     });
 
   } catch (error) {
-    console.error('Erro no login:', error);
-
-    return res.status(500).json({
-      mensagem: 'Erro interno ao realizar login.'
-    });
+    return errorResponse(error, res, 'realizar login');
   }
 }
 

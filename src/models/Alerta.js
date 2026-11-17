@@ -62,19 +62,30 @@ module.exports = (sequelize, DataTypes) => {
     {
       tableName: 'alertas',
       timestamps: true,
-      underscored: false
+      underscored: false,
+      indexes: [
+        {
+          name: 'uq_alertas_evento',
+          unique: true,
+          fields: ['item_pedido_id', 'data_prevista', 'tipo_alerta']
+        }
+      ]
     }
   );
 
   Alerta.associate = (models) => {
     Alerta.belongsTo(models.Cliente, {
       foreignKey: 'cliente_id',
-      as: 'cliente'
+      as: 'cliente',
+      onUpdate: 'CASCADE',
+      onDelete: 'CASCADE'
     });
 
     Alerta.belongsTo(models.ItemPedido, {
       foreignKey: 'item_pedido_id',
-      as: 'itemPedido'
+      as: 'itemPedido',
+      onUpdate: 'CASCADE',
+      onDelete: 'CASCADE'
     });
   };
 
